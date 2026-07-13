@@ -147,9 +147,18 @@ app.post(
 
     try {
       const result = await cache.once(hash, async () => {
+        console.time("pdf-total");
+        console.time("pdf-extracao-texto");
+
         const text = await extractTextFromPdf(req.file.buffer);
 
+        console.timeEnd("pdf-extracao-texto");
+        console.time("gemini");
+
         const data = await extractPurchaseOrderWithAI(text);
+
+        console.timeEnd("gemini");
+        console.timeEnd("pdf-total");
 
         const value = {
           data,

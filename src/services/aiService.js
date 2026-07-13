@@ -266,246 +266,33 @@ async function executeWithRetry(
 }
 
 function buildPrompt(pdfText) {
-  const limitedText = pdfText.slice(0, 50000);
+  const limitedText = pdfText.slice(0, 20000);
 
   return `
-Você é um sistema especializado em extrair dados de Ordens de Compra
-automotivas.
-
-Analise documentos com diferentes layouts e nomenclaturas e retorne
-somente o JSON compatível com o schema fornecido.
-
-==================================================
-REGRAS GERAIS
-==================================================
-
-- Analise exclusivamente o conteúdo do documento.
-- Não utilize conhecimento externo.
-- Não invente dados.
-- Não complete dados ausentes.
-- Não calcule valores ausentes.
-- Não corrija documentos, nomes, placas ou códigos.
-- Quando um campo não existir claramente, retorne null.
-- O campo itens deve sempre ser um array.
-- Não retorne campos adicionais além dos existentes no schema.
-
-==================================================
-CLIENTE
-==================================================
-
-cliente representa a empresa compradora, contratante ou empresa para
-a qual a nota fiscal deve ser emitida.
-
-Pode aparecer como:
-
-- Cliente
-- Comprador
-- Contratante
-- Empresa Compradora
-- Razão Social para emissão da Nota Fiscal
-- Cliente para faturamento
-- Destinatário
-
-clienteDocumento deve conter o CNPJ ou CPF da empresa cliente.
-
-Retorne o documento preferencialmente somente com números, sem pontos,
-barras, traços ou espaços.
-
-Nunca utilize o fornecedor como cliente.
-
-==================================================
-CONTATO
-==================================================
-
-Extraia quando disponíveis:
-
-- contatoNome
-- contatoTelefone
-- contatoEmail
-
-Esses dados devem representar o contato geral do pedido ou da empresa
-compradora.
-
-==================================================
-PEDIDO
-==================================================
-
-numeroPedidoCompra pode aparecer como:
-
-- Pedido SAP
-- Pedido de Compra
-- Número do Pedido de Compra
-- Nº Pedido
-- Purchase Order
-- PO
-
-codigoInterno pode aparecer como:
-
-- Ordem de Serviço
-- Número da OS
-- Nº OS
-- Chamado
-- Código da solicitação
-- Referência interna
-- Código interno
-
-Não confunda numeroPedidoCompra com codigoInterno.
-
-==================================================
-DATAS
-==================================================
-
-Normalize datas para o formato YYYY-MM-DD.
-
-dataAutorizacao representa a data de emissão, criação ou autorização
-da Ordem de Compra.
-
-dataEntrada representa a entrada do veículo ou abertura do atendimento,
-somente quando isso estiver explicitamente indicado.
-
-Não confunda dataAutorizacao com dataEntrada.
-
-==================================================
-VEÍCULO
-==================================================
-
-Extraia:
-
-- placa
-- marca
-- modelo
-- renavam
-- chassi
-- cor
-- anoFabricacao
-- anoModelo
-- km
-
-Interprete semanticamente:
-
-- Fabricante como marca.
-- Veículo como modelo.
-- Odômetro, quilometragem ou KM atual como km.
-- Identificação como placa somente quando possuir formato compatível.
-
-Remova espaços e separadores desnecessários da placa.
-
-Exemplo:
-
-TEG-3F43
-
-deve resultar em:
-
-TEG3F43
-
-Converta quilometragens para número inteiro.
-
-Exemplo:
-
-10.551 KM
-
-deve resultar em:
-
-10551
-
-Quando o documento informar:
-
-Fabricação/Modelo: 2024/2025
-
-retorne:
-
-anoFabricacao: 2024
-anoModelo: 2025
-
-Quando houver somente um campo Modelo/Ano com um único ano, esse valor
-deve ser tratado como anoModelo.
-
-Nunca copie automaticamente o mesmo ano para anoFabricacao e anoModelo.
-
-==================================================
-ENTREGA
-==================================================
-
-Extraia somente quando claramente informados:
-
-- clienteEntregaDocumento
-- clienteEntrega
-- enderecoEntrega
-- municipioEntrega
-- estadoEntrega
-- cepEntrega
-- clienteEntregaContatoNome
-- clienteEntregaContatoTelefone
-- clienteEntregaContatoEmail
-
-Não copie automaticamente cliente para clienteEntrega.
-
-Não copie automaticamente clienteDocumento para
-clienteEntregaDocumento.
-
-O documento de entrega também deve ser retornado preferencialmente
-somente com números.
-
-==================================================
-OBSERVAÇÃO
-==================================================
-
-observacao deve conter somente uma observação geral relevante da Ordem
-de Compra.
-
-Não coloque em observacao informações que já possuem um campo próprio.
-
-==================================================
-ITENS
-==================================================
-
-Extraia todos os produtos, peças ou serviços existentes no documento.
-
-Cada item deve possuir somente:
-
-- codigo
-- descricao
-- quantidade
-- valorVenda
-
-codigo representa o código, referência, SKU ou identificador explícito
-do item.
-
-descricao representa o nome ou descrição da peça, produto ou serviço.
-
-quantidade deve ser o valor explicitamente informado no documento.
-
-valorVenda deve representar o preço unitário do item informado na
-Ordem de Compra.
-
-Converta valores monetários brasileiros para number.
-
-Exemplos:
-
-R$ 16.900,00 -> 16900
-R$ 1.250,50 -> 1250.50
-
-Não utilize o valor total da linha como valorVenda quando o documento
-possuir quantidade maior que 1 e não informar claramente o valor
-unitário.
-
-Não calcule valorVenda dividindo o valor total pela quantidade.
-
-Não calcule valor total.
-
-==================================================
-FORMATO DE SAÍDA
-==================================================
-
-Retorne apenas o JSON compatível com o schema.
-
-Todos os campos definidos no schema devem existir.
-
-Campos não encontrados devem ser null.
-
-itens deve sempre ser um array.
-
-DOCUMENTO PARA ANÁLISE:
+Extraia os dados da Ordem de Compra abaixo e retorne somente o JSON
+compatível com o schema fornecido.
+
+Regras:
+
+- Use exclusivamente informações presentes no documento.
+- Não invente, não complete e não calcule dados ausentes.
+- Campos ausentes devem ser null.
+- itens deve sempre ser um array.
+- Datas devem ser normalizadas para YYYY-MM-DD.
+- CNPJ e CPF devem ser retornados somente com números.
+- Placas devem ser retornadas sem hífen.
+- Valores monetários brasileiros devem ser convertidos para number.
+- valorVenda representa o valor unitário explicitamente informado.
+- Não use o valor total da linha como valor unitário.
+- numeroPedidoCompra pode aparecer como Pedido SAP, Pedido de Compra,
+  Purchase Order ou PO.
+- codigoInterno pode aparecer como OS, Ordem de Serviço, Chamado ou
+  Código da Solicitação.
+- Nunca confunda fornecedor com cliente.
+- Nunca copie automaticamente cliente para clienteEntrega.
+- Extraia todos os itens encontrados.
+
+DOCUMENTO:
 
 ${limitedText}
 `;
@@ -601,13 +388,17 @@ async function extractPurchaseOrderWithAI(pdfText) {
           responseMimeType: "application/json",
           responseJsonSchema: ordemCompraSchema,
           temperature: 0,
+
+          thinkingConfig: {
+            thinkingLevel: "minimal",
+          },
         },
       }),
 
     {
-      maxAttempts: 4,
-      initialDelayMs: 1000,
-      maxDelayMs: 10000,
+      maxAttempts: 3,
+      initialDelayMs: 700,
+      maxDelayMs: 5000,
     },
   );
 
