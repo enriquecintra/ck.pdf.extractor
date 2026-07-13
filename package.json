@@ -1,0 +1,22 @@
+{
+  "name": "ck-pdf-extractor",
+  "version": "1.0.0",
+  "description": "API Node.js para extração estruturada de Ordens de Compra em PDF com Google Gemini",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node --check src/server.js && node --check src/services/aiService.js && node --check src/services/pdfService.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@google/genai": "^2.10.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "pdf-parse": "^2.4.5"
+  }
+}

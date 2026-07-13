@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ck-pdf-extractor
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: MAX_PDF_SIZE_MB
+        value: 10
+      - key: CACHE_TTL_MINUTES
+        value: 30
+      - key: CACHE_MAX_ENTRIES
+        value: 100
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
